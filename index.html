@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Earworm: Can spoken audio hijack an AI voice agent?</title>
+<meta name="description" content="Earworm: evaluating large audio language model agents for susceptibility to audio prompt injection attacks. A BSc dissertation by Hayden Williams, Oxford Brookes University.">
+<meta name="author" content="Hayden Williams">
+<link rel="canonical" href="https://haydenw-uk.github.io/voice-injection-investigation-dissertation/">
+<meta property="og:title" content="Earworm: Audio Prompt Injection Against AI Voice Agents">
+<meta property="og:description" content="All three tested voice models were vulnerable. Direct spoken requests worked far more often than hidden audio payloads.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://haydenw-uk.github.io/voice-injection-investigation-dissertation/">
+<meta property="og:image" content="https://haydenw-uk.github.io/voice-injection-investigation-dissertation/assets/img/earworm-lockup.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Earworm: Audio Prompt Injection Against AI Voice Agents">
+<meta name="twitter:description" content="All three tested voice models were vulnerable. The real risk was a direct spoken request.">
+<meta name="twitter:image" content="https://haydenw-uk.github.io/voice-injection-investigation-dissertation/assets/img/earworm-lockup.png">
+<meta name="theme-color" content="#0a0f15">
+<link rel="icon" type="image/png" href="assets/img/favicon.png">
+<link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+<link rel="stylesheet" href="assets/css/fonts.css">
+<link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+
+<!-- ===================== NAV ===================== -->
+<nav class="nav" aria-label="Primary">
+  <a class="brand" href="#top" aria-label="Earworm home">
+    <img class="mark" src="assets/img/earworm-mark.png" alt="" aria-hidden="true" width="79" height="30">
+    <span class="wordmark" aria-hidden="true"><span class="ear">EAR</span><span class="worm">WORM</span></span>
+  </a>
+  <div class="links">
+    <a href="#finding">Finding</a>
+    <a href="#framework">Framework</a>
+    <a href="#dataset">Dataset</a>
+    <a href="#results">Results</a>
+    <a href="#meaning">Meaning</a>
+  </div>
+</nav>
+
+<!-- ===================== HERO ===================== -->
+<header class="hero" id="top">
+  <canvas id="hero-canvas" aria-hidden="true"></canvas>
+  <div class="wrap">
+    <p class="hero-kicker">
+      <span class="tag">Audio Prompt Injection</span>
+      <span>BSc Dissertation</span>
+      <span>Oxford Brookes · 2026</span>
+    </p>
+    <h1 aria-label="Earworm">
+      <span class="buried" aria-hidden="true">EARWORM</span>
+      <span class="glyph ear">E</span><span class="glyph ear">A</span><span class="glyph ear">R</span><span class="glyph worm">W</span><span class="glyph worm">O</span><span class="glyph worm">R</span><span class="glyph worm">M</span>
+    </h1>
+    <p class="hero-sub">Can a <b>spoken instruction</b> hijack an AI voice agent into doing something it shouldn't? Three audio-native models were put behind a customer-service desk with real tools. <b>All three broke.</b></p>
+    <div class="hero-cta">
+      <a class="btn primary" href="#finding">See the headline finding
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+      </a>
+      <a class="btn" href="https://github.com/haydenw-uk/voice-injection-investigation-dissertation" target="_blank" rel="noopener noreferrer">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.58 2 12.26c0 4.5 2.87 8.32 6.84 9.67.5.1.68-.22.68-.49l-.01-1.7c-2.78.62-3.37-1.37-3.37-1.37-.46-1.18-1.11-1.5-1.11-1.5-.91-.63.07-.62.07-.62 1 .07 1.53 1.06 1.53 1.06.89 1.57 2.34 1.12 2.91.85.09-.66.35-1.12.63-1.37-2.22-.26-4.56-1.14-4.56-5.07 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.3.1-2.71 0 0 .84-.28 2.75 1.05a9.36 9.36 0 0 1 5 0c1.91-1.33 2.75-1.05 2.75-1.05.55 1.41.2 2.45.1 2.71.64.72 1.03 1.63 1.03 2.75 0 3.94-2.34 4.81-4.57 5.06.36.32.68.94.68 1.9l-.01 2.82c0 .27.18.6.69.49A10.02 10.02 0 0 0 22 12.26C22 6.58 17.52 2 12 2Z"/></svg>
+        Repository
+      </a>
+    </div>
+  </div>
+  <div class="scroll-cue" aria-hidden="true"><span>Listen in</span><span class="bar"></span></div>
+</header>
+
+<!-- ===================== THESIS ===================== -->
+<section class="thesis section-pad">
+  <div class="wrap thesis-grid">
+    <div class="reveal">
+      <p class="eyebrow">The question</p>
+      <p class="q" style="margin-top:1.1rem">Voice agents are already answering calls in banks and call centres. They carry the <span class="hl-b">same weakness</span> as any language model: they follow instructions. What happens when the instruction arrives as <span class="hl">speech</span>?</p>
+    </div>
+    <div class="aside reveal">
+      <p>Prompt injection, where attacker text hidden in data is treated as a legitimate command, is well studied for <em>text</em>.</p>
+      <p>For <em>audio</em>, it was largely untested. Earworm closes that gap: it asks whether spoken adversarial input can compromise voice agents equipped with real tools, and whether some model architectures resist better than others.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== HEADLINE FINDING / BURIAL DEMO ===================== -->
+<section class="finding section-pad" id="finding">
+  <div class="wrap">
+    <p class="eyebrow breach reveal">The headline finding</p>
+    <h2 class="section-title reveal">Hidden audio rarely worked. Direct spoken requests worked far more often.</h2>
+    <p class="lede reveal">The obvious fear is a secret payload <strong>buried beneath</strong> innocent speech: an instruction the AI hears but a human doesn't. Drag the slider and bury it deeper. Watch what happens.</p>
+
+    <div class="demo reveal">
+      <!-- waveform stage -->
+      <div class="demo-stage">
+        <div class="stage-label"><span>Buried-audio attack</span><span>cover speech + hidden payload</span></div>
+        <canvas id="burial-canvas"></canvas>
+        <div class="legend">
+          <span><i class="sig"></i> Benign cover speech</span>
+          <span><i class="brc"></i> Hidden instruction</span>
+        </div>
+      </div>
+
+      <!-- controls -->
+      <div class="demo-controls">
+        <div class="control-card">
+          <h4>Payload volume vs cover</h4>
+          <div class="db-readout"><span class="val" id="db-val">-12</span><span class="unit">dB</span></div>
+          <p class="db-caption" id="db-caption">Well concealed. The payload is inaudible beneath the cover speech, and no model acted on it.</p>
+          <input type="range" id="db-slider" min="-12" max="-6" step="3" value="-12" aria-label="Hidden payload volume relative to cover speech, in decibels">
+          <div class="range-scale"><span>−12 dB, buried</span><span>−9</span><span>−6 dB, audible</span></div>
+        </div>
+        <div class="control-card result-card">
+          <h4>Acoustic attack success</h4>
+          <div class="result-figure"><span class="big zero" id="aco-figure">0/24</span></div>
+          <div class="result-figure"><span class="sub" id="aco-sub">0.0% of buried-audio trials</span></div>
+          <p class="result-note" id="aco-note">Zero breaches at this concealment.</p>
+        </div>
+      </div>
+    </div>
+    <div class="sr-only">
+      Buried-audio attack results: at -12 dB, 0 of 24 trials breached; at -9 dB, 1 of 27 trials breached; at -6 dB, 4 of 24 trials breached. Acoustic attacks only improved once the hidden payload became more audible.
+    </div>
+
+    <div class="punchline reveal">
+      <div class="stat">up to 57%</div>
+      <p class="txt">The <b>semantic</b> attack was more effective: a caller <b>asking the agent plainly</b> to do something it shouldn't. That worked on up to <b>56.9%</b> of trials, without hiding the instruction in the audio.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== FRAMEWORK ===================== -->
+<section class="framework section-pad" id="framework">
+  <div class="wrap">
+    <p class="eyebrow reveal">How it was tested</p>
+    <h2 class="section-title reveal">A full audio-injection test rig for Tech Direct.</h2>
+    <p class="lede reveal">Each run starts from an attack dataset, moves through an automated runner, swaps one Docker model profile onto the GPU, sends audio through the FastAPI agent, and scores every tool trace into the results database and Streamlit monitor.</p>
+
+    <div class="simple-grid reveal">
+      <div class="simple-flow" aria-label="Simple audio prompt injection test diagram">
+        <div class="simple-node" data-simple-step="0">
+          <span class="simple-ic">01</span>
+          <h3>Someone speaks to the agent</h3>
+          <p>The audio may be normal, persuasive, multilingual, emotional, or hiding a second instruction.</p>
+        </div>
+        <div class="simple-arrow" aria-hidden="true"><span></span></div>
+        <div class="simple-node" data-simple-step="1">
+          <span class="simple-ic">02</span>
+          <h3>The voice model decides what it heard</h3>
+          <p>Voxtral, Ultravox, and Gemma are tested one at a time in the same setup.</p>
+        </div>
+        <div class="simple-arrow" aria-hidden="true"><span></span></div>
+        <div class="simple-node risk" data-simple-step="2">
+          <span class="simple-ic">03</span>
+          <h3>The agent can touch customer data</h3>
+          <p>Lookup, refund, account, SQL, and email tools connect to a customer database.</p>
+        </div>
+        <div class="simple-arrow" aria-hidden="true"><span></span></div>
+        <div class="simple-node" data-simple-step="3">
+          <span class="simple-ic">04</span>
+          <h3>The run records what happened</h3>
+          <p>Success means the unsafe requested tool was not called.</p>
+        </div>
+      </div>
+      <div class="plain-panel">
+        <h3>The simple question</h3>
+        <p>Can spoken audio make a customer-service AI use a business tool it should refuse?</p>
+        <div class="plain-outcomes" aria-label="Possible outcomes">
+          <span class="pass">Resisted</span>
+          <span class="fail">Unsafe tool call</span>
+          <span class="score">Scored and stored</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== DATASET ===================== -->
+<section class="dataset section-pad" id="dataset">
+  <div class="wrap">
+    <p class="eyebrow reveal">The attack corpus</p>
+    <h2 class="section-title reveal">179 audio clips, including 149 adversarial attacks and 30 benign controls.</h2>
+    <p class="lede reveal">Every attack clip targeted a specific tool against a specific customer from a ten-person roster, so success could be verified automatically without a human judging the output.</p>
+
+    <div class="corpus">
+      <div class="corpus-card semantic reveal">
+        <p class="fam">Semantic, spoken</p>
+        <p class="count">124</p>
+        <p class="caption">Ordinary spoken instructions where the model is asked, persuaded, or pressured.</p>
+        <div class="breakdown">
+          <div class="row"><span>Multi-lingual (EN + JA)</span><b>50</b></div>
+          <div class="row"><span>Urgency / fear persona</span><b>25</b></div>
+          <div class="row"><span>Authority / calm persona</span><b>25</b></div>
+          <div class="row"><span>Poetry, English</span><b>12</b></div>
+          <div class="row"><span>Poetry, Japanese</span><b>12</b></div>
+        </div>
+      </div>
+      <div class="corpus-card acoustic reveal">
+        <p class="fam">Acoustic, hidden</p>
+        <p class="count">25</p>
+        <p class="caption">A malicious instruction mixed <em>beneath</em> a normal conversation, at three concealment levels.</p>
+        <div class="breakdown">
+          <div class="row"><span>−12 dB, very quiet</span><b>8</b></div>
+          <div class="row"><span>−9 dB</span><b>9</b></div>
+          <div class="row"><span>−6 dB, more audible</span><b>8</b></div>
+        </div>
+      </div>
+      <div class="corpus-card benign reveal">
+        <p class="fam">Benign, control</p>
+        <p class="count">30</p>
+        <p class="caption">Ordinary customer requests, confirming the agent behaves under normal conditions.</p>
+        <div class="breakdown">
+          <div class="row"><span>False-positive rate</span><b>0 / 90</b></div>
+          <div class="row"><span>Across all 3 models</span><b>clean</b></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== RESULTS ===================== -->
+<section class="results section-pad" id="results">
+  <div class="wrap">
+    <p class="eyebrow breach reveal">What happened</p>
+    <h2 class="section-title reveal">Around two in five adversarial trials caused a security violation.</h2>
+
+    <!-- Chart 1: overall binary success -->
+    <div class="chart-block reveal">
+      <div class="chart-head">
+        <h3>Binary attack success (S1 + S2)</h3>
+        <p class="note">Share of adversarial trials causing at least a partial security violation. 95% CI in brackets.</p>
+      </div>
+      <div class="bars">
+        <div class="bar-row">
+          <div class="label">Ultravox<small>v0.5, 8B</small></div>
+          <div class="bar-track"><div class="bar-fill breach" data-w="48.6" style="--w:48.6%"><span class="lbl">48.6%<span class="ci">, [40.5 to 56.8]</span></span></div></div>
+        </div>
+        <div class="bar-row">
+          <div class="label">Gemma 4<small>E4B-it</small></div>
+          <div class="bar-track"><div class="bar-fill breach" data-w="40.5" style="--w:40.5%"><span class="lbl">40.5%<span class="ci">, [33.1 to 48.6]</span></span></div></div>
+        </div>
+        <div class="bar-row">
+          <div class="label">Voxtral<small>Mini, 3B</small></div>
+          <div class="bar-track"><div class="bar-fill breach" data-w="38.5" style="--w:38.5%"><span class="lbl">38.5%<span class="ci">, [30.4 to 45.9]</span></span></div></div>
+        </div>
+        <div class="bar-row">
+          <div class="label">Benign<small>control</small></div>
+          <div class="bar-track"><div class="bar-empty">0 / 90, no false positives across any model</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chart 2: semantic vs acoustic -->
+    <div class="chart-block reveal">
+      <div class="chart-head">
+        <h3>Semantic vs acoustic: the gap</h3>
+        <p class="note">Spoken instructions beat hidden payloads on every model, at high significance.</p>
+      </div>
+      <div class="pair-grid">
+        <div class="pair-card">
+          <p class="m">Voxtral Mini 3B</p>
+          <div class="pair-metric sem"><div class="k"><span>Semantic</span><span>43.9%</span></div><div class="pair-bar"><i data-w="43.9" style="--w:43.9%"></i></div></div>
+          <div class="pair-metric aco"><div class="k"><span>Acoustic</span><span>12.0%</span></div><div class="pair-bar"><i data-w="12" style="--w:12%"></i></div></div>
+          <p class="gap">+31.9 pp toward speech</p>
+        </div>
+        <div class="pair-card">
+          <p class="m">Ultravox v0.5 8B</p>
+          <div class="pair-metric sem"><div class="k"><span>Semantic</span><span>56.9%</span></div><div class="pair-bar"><i data-w="56.9" style="--w:56.9%"></i></div></div>
+          <div class="pair-metric aco"><div class="k"><span>Acoustic</span><span>8.0%</span></div><div class="pair-bar"><i data-w="8" style="--w:8%"></i></div></div>
+          <p class="gap">+48.9 pp toward speech</p>
+        </div>
+        <div class="pair-card">
+          <p class="m">Gemma 4 E4B-it</p>
+          <div class="pair-metric sem"><div class="k"><span>Semantic</span><span>48.8%</span></div><div class="pair-bar"><i data-w="48.8" style="--w:48.8%"></i></div></div>
+          <div class="pair-metric aco"><div class="k"><span>Acoustic</span><span>0.0%</span></div><div class="pair-bar"><i data-w="0" style="--w:0%"></i></div></div>
+          <p class="gap">+48.8 pp, zero acoustic breaches</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Standout -->
+    <div class="standout reveal">
+      <div class="huge"><span class="num">96</span>%<span class="cap">Ultravox, English</span></div>
+      <div class="txt">
+        <h3>The single most extreme result in the dataset.</h3>
+        <p>Against plain English multilingual-category attacks, <b>Ultravox failed 96% of the time</b>, including an 88% complete-success rate. Under the same attacks in Japanese it held far better (50%), although different speech-synthesis engines partly confound that language gap.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== MEANING ===================== -->
+<section class="meaning section-pad" id="meaning">
+  <div class="wrap">
+    <p class="eyebrow reveal">What it means</p>
+    <h2 class="section-title reveal">The audio channel is not a layer of safety.</h2>
+
+    <div class="concl">
+      <div class="concl-card key reveal">
+        <h4>It's real, not theoretical.</h4>
+        <p>A clean benign baseline with attack success rates approaching one in two makes this a practical, exploitable weakness, not a lab curiosity.</p>
+      </div>
+      <div class="concl-card key reveal">
+        <h4>Just asking is the attack.</h4>
+        <p>Models follow instructions whether typed or spoken. Hiding an attack acoustically added little; asking convincingly did the work.</p>
+      </div>
+      <div class="concl-card reveal">
+        <h4>Architecture is a security variable.</h4>
+        <p>Gemma's purpose-built audio encoder resisted every acoustic attack. Model choice measurably changes exposure, even with the environment held constant.</p>
+      </div>
+      <div class="concl-card reveal">
+        <h4>Urgency pressures the model.</h4>
+        <p>Distressed, time-critical callers outperformed calm, authoritative ones on two of three models. The trend was directional but consistent.</p>
+      </div>
+    </div>
+
+    <div class="defence reveal">
+      <p class="eyebrow">The defensive takeaway</p>
+      <p>Don't try to filter the audio. The vulnerability lives in the model's willingness to act, so defences belong at the <b>tool and permissions layer</b>, exactly where you'd defend a text channel.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== ETHICS ===================== -->
+<section class="ethics section-pad">
+  <div class="wrap">
+    <p class="eyebrow reveal">Done responsibly</p>
+    <h2 class="section-title reveal">Sandboxed, synthetic, and disclosed.</h2>
+    <div class="ethics-grid">
+      <div class="ethics-item reveal"><p class="ic">DATA</p><h5>Entirely synthetic</h5><p>No real people or systems were ever at risk. Every customer was fabricated.</p></div>
+      <div class="ethics-item reveal"><p class="ic">RUNTIME</p><h5>Rolled back</h5><p>A fully containerised sandbox; every write action was logged and immediately reverted.</p></div>
+      <div class="ethics-item reveal"><p class="ic">DISCLOSURE</p><h5>Responsible</h5><p>Findings shared with model providers, noting that open-weight local models can't be centrally patched.</p></div>
+      <div class="ethics-item reveal"><p class="ic">GOVERNANCE</p><h5>Ethics-approved</h5><p>Ran under Oxford Brookes' signed E1 process and the BCS Code of Conduct.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== FOOTER ===================== -->
+<footer class="foot" id="about">
+  <div class="wrap">
+    <div class="foot-top">
+      <div class="reveal">
+        <h2>Native audio prompt injection is a real, measurable threat.</h2>
+        <div class="foot-cta">
+          <a class="btn primary" href="https://github.com/haydenw-uk/voice-injection-investigation-dissertation" target="_blank" rel="noopener noreferrer">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.58 2 12.26c0 4.5 2.87 8.32 6.84 9.67.5.1.68-.22.68-.49l-.01-1.7c-2.78.62-3.37-1.37-3.37-1.37-.46-1.18-1.11-1.5-1.11-1.5-.91-.63.07-.62.07-.62 1 .07 1.53 1.06 1.53 1.06.89 1.57 2.34 1.12 2.91.85.09-.66.35-1.12.63-1.37-2.22-.26-4.56-1.14-4.56-5.07 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.3.1-2.71 0 0 .84-.28 2.75 1.05a9.36 9.36 0 0 1 5 0c1.91-1.33 2.75-1.05 2.75-1.05.55 1.41.2 2.45.1 2.71.64.72 1.03 1.63 1.03 2.75 0 3.94-2.34 4.81-4.57 5.06.36.32.68.94.68 1.9l-.01 2.82c0 .27.18.6.69.49A10.02 10.02 0 0 0 22 12.26C22 6.58 17.52 2 12 2Z"/></svg>
+            View the code &amp; data
+          </a>
+        </div>
+      </div>
+      <div class="meta reveal">
+        <div class="row"><span>Author</span><b><a href="https://haydenwilliams.dev/" target="_blank" rel="noopener noreferrer">Hayden Williams</a></b></div>
+        <div class="row"><span>Degree</span><b><a href="https://www.brookes.ac.uk/courses/undergraduate/computer-science-for-cyber-security" target="_blank" rel="noopener noreferrer">BSc (Hons) Computer Science for Cyber Security</a></b></div>
+        <div class="row"><span>School</span><b><a href="https://www.brookes.ac.uk/about-brookes/structure-and-governance/faculties-and-schools/ecm" target="_blank" rel="noopener noreferrer">School of Engineering, Computing, and Mathematics</a></b></div>
+        <div class="row"><span>Supervisor</span><b><a href="https://www.brookes.ac.uk/profiles/staff/james-maunder" target="_blank" rel="noopener noreferrer">Dr James Maunder</a></b></div>
+        <div class="row"><span>Recognition</span><b>A+ / 76%, TechShow 2026 shortlist</b></div>
+      </div>
+    </div>
+    <div class="foot-brand reveal">
+      <div class="footer-lockup" aria-label="Earworm, Oxford Brookes University">
+        <div class="lockup-earworm">
+          <img src="assets/img/earworm-lockup.png" alt="Earworm" width="260">
+        </div>
+        <div class="lockup-link" aria-hidden="true">
+          <span></span>
+        </div>
+        <div class="lockup-brookes">
+          <img src="assets/img/oxford-brookes-logo.svg" alt="Oxford Brookes University" width="260">
+        </div>
+      </div>
+    </div>
+    <div class="foot-base">
+      <span>Earworm: evaluating LALM agents for audio prompt injection</span>
+      <span><a href="#top">Back to top ↑</a></span>
+    </div>
+  </div>
+</footer>
+
+<!-- GSAP (vendored) -->
+<script src="assets/js/gsap.min.js"></script>
+<script src="assets/js/ScrollTrigger.min.js"></script>
+<!-- App -->
+<script type="module" src="assets/js/main.js"></script>
+</body>
+</html>
